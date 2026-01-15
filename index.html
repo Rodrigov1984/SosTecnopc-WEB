@@ -268,27 +268,53 @@
                 }, 100);
             };
             
-            // CMS State - Inicializar con valores por defecto o localStorage
-            const [siteConfig, setSiteConfig] = useState(() => {
-                const saved = localStorage.getItem('sostecnopc_admin_config');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    // Asegurar que specialties exista (para compatibilidad)
-                    if (!parsed.hero.specialties) {
-                        parsed.hero.specialties = initialConfig.hero.specialties;
+            // CMS State - Inicializar con valores por defecto
+            const [siteConfig, setSiteConfig] = useState(initialConfig);
+            const [isLoading, setIsLoading] = useState(true);
+            const [saveStatus, setSaveStatus] = useState(''); // 'saving', 'saved', 'error'
+            
+            // Cargar configuración desde la API al iniciar
+            useEffect(() => {
+                const loadRemoteConfig = async () => {
+                    try {
+                        const response = await fetch('/api/config');
+                        if (response.ok) {
+                            const remoteConfig = await response.json();
+                            // Asegurar compatibilidad
+                            if (!remoteConfig.hero?.specialties) {
+                                remoteConfig.hero.specialties = initialConfig.hero.specialties;
+                            }
+                            if (!remoteConfig.hero?.specialties?.descriptions) {
+                                remoteConfig.hero.specialties.descriptions = {};
+                            }
+                            if (!remoteConfig.contact || typeof remoteConfig.contact?.title === 'string') {
+                                remoteConfig.contact = initialConfig.contact;
+                            }
+                            setSiteConfig(remoteConfig);
+                            localStorage.setItem('sostecnopc_admin_config', JSON.stringify(remoteConfig));
+                        }
+                    } catch (e) {
+                        console.log('Usando configuración local');
+                        // Intentar cargar desde localStorage como fallback
+                        const saved = localStorage.getItem('sostecnopc_admin_config');
+                        if (saved) {
+                            const parsed = JSON.parse(saved);
+                            if (!parsed.hero?.specialties) {
+                                parsed.hero.specialties = initialConfig.hero.specialties;
+                            }
+                            if (!parsed.hero?.specialties?.descriptions) {
+                                parsed.hero.specialties.descriptions = {};
+                            }
+                            if (!parsed.contact || typeof parsed.contact?.title === 'string') {
+                                parsed.contact = initialConfig.contact;
+                            }
+                            setSiteConfig(parsed);
+                        }
                     }
-                    if (!parsed.hero.specialties.descriptions) {
-                        parsed.hero.specialties.descriptions = {};
-                    }
-                    // Asegurar que contact tenga la nueva estructura (para compatibilidad)
-                    if (!parsed.contact || typeof parsed.contact.title === 'string') {
-                        parsed.contact = initialConfig.contact;
-                    }
-                    return parsed;
-                }
-                return initialConfig;
-            });
-            const [isLoading, setIsLoading] = useState(false);
+                    setIsLoading(false);
+                };
+                loadRemoteConfig();
+            }, []);
             
             // --- SISTEMA DE ADMIN OCULTO ---
             const [showPinModal, setShowPinModal] = useState(false);
@@ -381,12 +407,37 @@
                 }
             }, [showAdminPanel]);
             
-            // Guardar configuración (aplicar borrador al estado real)
-            const saveConfig = () => {
+            // Guardar configuración (aplicar borrador al estado real y enviar a API)
+            const saveConfig = async () => {
                 if (draftConfig) {
+                    setSaveStatus('saving');
                     setSiteConfig(draftConfig);
                     localStorage.setItem('sostecnopc_admin_config', JSON.stringify(draftConfig));
-                    alert('✅ Cambios guardados correctamente');
+                    
+                    try {
+                        const response = await fetch('/api/config', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Admin-Pin': '1234'
+                            },
+                            body: JSON.stringify(draftConfig)
+                        });
+                        
+                        if (response.ok) {
+                            setSaveStatus('saved');
+                            alert('✅ Cambios guardados en el servidor');
+                        } else {
+                            setSaveStatus('error');
+                            alert('⚠️ Guardado local OK, pero hubo error al sincronizar con el servidor');
+                        }
+                    } catch (e) {
+                        setSaveStatus('error');
+                        console.error('Error al guardar:', e);
+                        alert('⚠️ Guardado local OK, pero no se pudo conectar al servidor');
+                    }
+                    
+                    setTimeout(() => setSaveStatus(''), 3000);
                 }
             };
             
@@ -1142,6 +1193,18 @@
                     </div>
                 );
             };
+
+            // Loading screen mientras carga la configuración
+            if (isLoading) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                        <div className="text-center">
+                            <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <p className="text-slate-500 font-medium">Cargando...</p>
+                        </div>
+                    </div>
+                );
+            }
 
             return (
                 <div className={`min-h-screen ${siteConfig.appearance.globalFont}`} style={{ backgroundColor: siteConfig.appearance.secondaryColor }}>
