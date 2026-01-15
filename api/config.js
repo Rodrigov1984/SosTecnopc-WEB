@@ -15,7 +15,7 @@ const defaultConfig = {
     secondaryColor: '#f8fafc',
     textColor: '#0f172a',
     logoPath: "/assets/logos/Sos Tecno Pc Logo.png",
-    logoSize: 280,
+    logoSize: 200,
     globalFont: 'font-sans',
     nav: {
       font: 'font-sans',
