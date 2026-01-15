@@ -15,7 +15,7 @@ const defaultConfig = {
     secondaryColor: '#f8fafc',
     textColor: '#0f172a',
     logoPath: "/assets/logos/logo1.png",
-    logoSize: 200
+    logoSize: 200,
     globalFont: 'font-sans',
     nav: {
       font: 'font-sans',
