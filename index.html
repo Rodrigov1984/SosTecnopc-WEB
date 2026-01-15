@@ -54,6 +54,21 @@
         
         /* Transiciones suaves para el modo editor */
         .layout-transition { transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* Admin Panel Oculto */
+        .admin-panel { 
+            animation: slideInFromRight 0.3s ease-out;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.15);
+        }
+        @keyframes slideInFromRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .admin-overlay { animation: fadeInOverlay 0.2s ease-out; }
+        @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+        .admin-input { transition: all 0.2s; border: 2px solid transparent; }
+        .admin-input:focus { border-color: #E30613; outline: none; box-shadow: 0 0 0 3px rgba(227,6,19,0.1); }
+        .admin-btn { transition: all 0.2s; }
+        .admin-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .admin-section { border-left: 3px solid #E30613; }
+        .pin-input { letter-spacing: 0.5em; font-family: monospace; }
     </style>
 </head>
 <body>
@@ -99,7 +114,14 @@
             AlignLeft: <React.Fragment><line x1="17" x2="3" y1="18" y2="18" /><line x1="21" x2="3" y1="6" y2="6" /><line x1="15" x2="3" y1="12" y2="12" /></React.Fragment>,
             AlignCenter: <React.Fragment><line x1="21" x2="3" y1="6" y2="6" /><line x1="17" x2="7" y1="12" y2="12" /><line x1="19" x2="5" y1="18" y2="18" /></React.Fragment>,
             AlignRight: <React.Fragment><line x1="21" x2="3" y1="6" y2="6" /><line x1="21" x2="9" y1="12" y2="12" /><line x1="21" x2="7" y1="18" y2="18" /></React.Fragment>,
-            MousePointer: <React.Fragment><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></React.Fragment>
+            MousePointer: <React.Fragment><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></React.Fragment>,
+            Save: <React.Fragment><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></React.Fragment>,
+            LogOut: <React.Fragment><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></React.Fragment>,
+            Edit: <React.Fragment><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></React.Fragment>,
+            Trash: <React.Fragment><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></React.Fragment>,
+            Plus: <React.Fragment><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></React.Fragment>,
+            ChevronDown: <polyline points="6 9 12 15 18 9"/>,
+            ChevronUp: <polyline points="18 15 12 9 6 15"/>
         };
 
         const Icon = ({ name, size = 24, className = "" }) => {
@@ -124,17 +146,19 @@
         };
 
         // --- Data Inicial ---
+        const ADMIN_PIN = "1234"; // PIN secreto para acceder al admin
+        
         const initialConfig = {
             appearance: {
                 primaryColor: '#E30613',
                 secondaryColor: '#f8fafc',
                 textColor: '#0f172a',
-                logoPath: "/assets/logos/sos_tecnopc_logo.png",
-                logoSize: 60,
+                logoPath: "/assets/logos/logo1.png",
+                logoSize: 200,
                 globalFont: 'font-sans',
                 nav: {
                     font: 'font-sans',
-                    size: 'text-[10px]',
+                    size: 'text-[200x]',
                     linkColor: '#0f172a',
                     activeColor: '#E30613',
                     btnBg: '#E30613',
@@ -146,7 +170,7 @@
                 title1: {
                     text: "SOLUCIONES",
                     font: "font-sans",
-                    size: "text-6xl md:text-9xl",
+                    size: "text-10xl md:text-9xl",
                     align: "text-left"
                 },
                 title2: {
@@ -164,10 +188,20 @@
                 button: {
                     text: "Ver Tarifas",
                     font: "font-sans",
-                    size: "text-[10px]",
+                    size: "text-[150]",
                     align: "justify-start",
                     bgColor: "#0f172a",
                     textColor: "#ffffff"
+                },
+                specialties: {
+                    title: "Nuestras Especialidades",
+                    showIds: [1, 2, 3, 7],
+                    descriptions: {
+                        1: "Diagnóstico completo y solución de problemas de software y hardware",
+                        2: "Limpieza profunda, cambio de pasta térmica y optimización",
+                        3: "Mejoras de RAM, SSD y componentes para máximo rendimiento",
+                        7: "Recuperación segura de archivos y datos importantes"
+                    }
                 }
             },
             services: [
@@ -179,7 +213,43 @@
                 { id: 6, title: "Repotenciación 3", price: "$120.000", desc: "SSD 1TB + Instalación SO.", icon: "Cpu", features: ["Máximo rendimiento", "Garantía extendida", "Recargo Santiago: +$15.000"] },
                 { id: 7, title: "Páginas Web", price: "Cotizar", desc: "Diseño profesional personalizado.", icon: "Globe", features: ["SEO Incluido", "Responsive Design", "Precio según proyecto"] },
                 { id: 8, title: "Aplicaciones Web", price: "Cotizar", desc: "Plataformas a medida.", icon: "Code2", features: ["Bases de datos", "Autogestionable", "Precio según proyecto"] }
-            ]
+            ],
+            contact: {
+                bgColor: "#0f172a",
+                textColor: "#ffffff",
+                footerText: "Sos.Tecnopc © 2026",
+                title: {
+                    text: "Contáctanos",
+                    show: true,
+                    align: "center"
+                },
+                subtitle: {
+                    text: "Estamos aquí para ayudarte",
+                    show: true,
+                    align: "center"
+                },
+                email: {
+                    value: "info@sostecnopc.com",
+                    show: true,
+                    align: "center"
+                },
+                phone: {
+                    value: "+56 9 1234 5678",
+                    show: true,
+                    align: "center"
+                },
+                whatsapp: {
+                    value: "+56912345678",
+                    label: "WhatsApp",
+                    show: true,
+                    align: "center"
+                },
+                address: {
+                    value: "Santiago, Chile",
+                    show: true,
+                    align: "center"
+                }
+            }
         };
 
         const App = () => {
@@ -187,10 +257,177 @@
             const [scrolled, setScrolled] = useState(false);
             const [isMenuOpen, setIsMenuOpen] = useState(false);
             const [logoError, setLogoError] = useState(false);
+            const [selectedService, setSelectedService] = useState('');
+            const contactFormRef = useRef(null);
             
-            // CMS State - Inicializar con valores por defecto
-            const [siteConfig, setSiteConfig] = useState(initialConfig);
+            // Función para solicitar servicio
+            const requestService = (serviceName) => {
+                setSelectedService(serviceName);
+                setTimeout(() => {
+                    contactFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            };
+            
+            // CMS State - Inicializar con valores por defecto o localStorage
+            const [siteConfig, setSiteConfig] = useState(() => {
+                const saved = localStorage.getItem('sostecnopc_admin_config');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    // Asegurar que specialties exista (para compatibilidad)
+                    if (!parsed.hero.specialties) {
+                        parsed.hero.specialties = initialConfig.hero.specialties;
+                    }
+                    if (!parsed.hero.specialties.descriptions) {
+                        parsed.hero.specialties.descriptions = {};
+                    }
+                    // Asegurar que contact tenga la nueva estructura (para compatibilidad)
+                    if (!parsed.contact || typeof parsed.contact.title === 'string') {
+                        parsed.contact = initialConfig.contact;
+                    }
+                    return parsed;
+                }
+                return initialConfig;
+            });
             const [isLoading, setIsLoading] = useState(false);
+            
+            // --- SISTEMA DE ADMIN OCULTO ---
+            const [showPinModal, setShowPinModal] = useState(false);
+            const [showAdminPanel, setShowAdminPanel] = useState(false);
+            const [pinError, setPinError] = useState(false);
+            const [activeAdminTab, setActiveAdminTab] = useState('apariencia');
+            const [editingService, setEditingService] = useState(null);
+            const pinInputRef = useRef(null);
+            
+            // Detector de combinación secreta: Ctrl+Shift+K
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    // Ignorar si está escribiendo en un input, textarea o select
+                    const tagName = e.target.tagName.toLowerCase();
+                    const isTyping = tagName === 'input' || tagName === 'textarea' || tagName === 'select' || e.target.isContentEditable;
+                    
+                    // Solo activar con Ctrl+Shift+K exactamente (y no está escribiendo)
+                    if (e.ctrlKey && e.shiftKey && (e.key === 'K' || e.key === 'k') && !e.altKey && !e.metaKey && !isTyping) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!showAdminPanel) {
+                            setShowPinModal(true);
+                            setPinError(false);
+                        } else {
+                            setShowAdminPanel(false);
+                        }
+                        return;
+                    }
+                    // Escape para cerrar (solo si hay algo abierto y no está escribiendo)
+                    if (e.key === 'Escape' && (showPinModal || showAdminPanel) && !isTyping) {
+                        setShowPinModal(false);
+                        setShowAdminPanel(false);
+                    }
+                };
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [showAdminPanel, showPinModal]);
+            
+            // Focus en el input del PIN cuando se abre el modal
+            useEffect(() => {
+                if (showPinModal && pinInputRef.current) {
+                    pinInputRef.current.value = '';
+                    pinInputRef.current.focus();
+                }
+            }, [showPinModal]);
+            
+            // Verificar PIN (usando ref, no estado)
+            const handlePinSubmit = () => {
+                const pin = pinInputRef.current?.value || '';
+                if (pin === ADMIN_PIN) {
+                    setShowPinModal(false);
+                    setShowAdminPanel(true);
+                } else {
+                    setPinError(true);
+                    setTimeout(() => setPinError(false), 1500);
+                }
+            };
+            
+            // Manejar Enter en el PIN
+            const handlePinKeyDown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handlePinSubmit();
+                }
+            };
+            
+            // Estado borrador para el panel admin (no afecta la vista principal hasta guardar)
+            const [draftConfig, setDraftConfig] = useState(null);
+            
+            // Inicializar borrador cuando se abre el panel
+            useEffect(() => {
+                if (showAdminPanel) {
+                    const draft = JSON.parse(JSON.stringify(siteConfig));
+                    // Asegurar que specialties exista
+                    if (!draft.hero.specialties) {
+                        draft.hero.specialties = {
+                            title: "Nuestras Especialidades",
+                            showIds: [1, 2, 3, 7],
+                            descriptions: {}
+                        };
+                    }
+                    if (!draft.hero.specialties.descriptions) {
+                        draft.hero.specialties.descriptions = {};
+                    }
+                    // Asegurar que contact tenga la nueva estructura
+                    if (!draft.contact || typeof draft.contact.title === 'string') {
+                        draft.contact = initialConfig.contact;
+                    }
+                    setDraftConfig(draft);
+                }
+            }, [showAdminPanel]);
+            
+            // Guardar configuración (aplicar borrador al estado real)
+            const saveConfig = () => {
+                if (draftConfig) {
+                    setSiteConfig(draftConfig);
+                    localStorage.setItem('sostecnopc_admin_config', JSON.stringify(draftConfig));
+                    alert('✅ Cambios guardados correctamente');
+                }
+            };
+            
+            // Actualizar borrador (no el estado real)
+            const updateConfig = (path, value) => {
+                setDraftConfig(prev => {
+                    if (!prev) return prev;
+                    const newConfig = JSON.parse(JSON.stringify(prev));
+                    const keys = path.split('.');
+                    let obj = newConfig;
+                    for (let i = 0; i < keys.length - 1; i++) {
+                        // Crear objeto intermedio si no existe
+                        if (!obj[keys[i]]) {
+                            obj[keys[i]] = {};
+                        }
+                        obj = obj[keys[i]];
+                    }
+                    obj[keys[keys.length - 1]] = value;
+                    return newConfig;
+                });
+            };
+            
+            // Actualizar servicio en borrador
+            const updateService = (id, field, value) => {
+                setDraftConfig(prev => {
+                    if (!prev) return prev;
+                    return {
+                        ...prev,
+                        services: prev.services.map(s => 
+                            s.id === id ? { ...s, [field]: value } : s
+                        )
+                    };
+                });
+            };
+            
+            // Cerrar sesión admin (descartar cambios no guardados)
+            const logoutAdmin = () => {
+                setShowAdminPanel(false);
+                setActiveAdminTab('apariencia');
+                setDraftConfig(null);
+            };
             
             // Limpiar caché antiguo al cargar
             useEffect(() => {
@@ -231,8 +468,687 @@
                 </div>
             );
 
+            // --- COMPONENTES DEL PANEL ADMIN ---
+            const PinModal = () => (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center admin-overlay" style={{ backgroundColor: 'rgba(0,0,0,0.8)' }}>
+                    <div className="bg-white rounded-2xl p-8 w-80 shadow-2xl text-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="w-16 h-16 mx-auto mb-4 bg-slate-900 rounded-full flex items-center justify-center">
+                            <Icon name="Lock" size={28} className="text-white" />
+                        </div>
+                        <h3 className="text-xl font-black mb-2">Acceso Restringido</h3>
+                        <p className="text-sm text-slate-500 mb-6">Ingresa el PIN de administrador</p>
+                        <input
+                            ref={pinInputRef}
+                            type="password"
+                            onKeyDown={handlePinKeyDown}
+                            placeholder="••••"
+                            maxLength={10}
+                            className={`w-full text-center text-2xl py-4 rounded-xl admin-input pin-input ${pinError ? 'bg-red-50 border-red-500' : 'bg-slate-100'}`}
+                        />
+                        {pinError && <p className="text-red-500 text-sm mt-2">PIN incorrecto</p>}
+                        <div className="flex gap-3 mt-6">
+                            <button 
+                                onClick={() => setShowPinModal(false)}
+                                className="flex-1 py-3 bg-slate-100 rounded-xl font-bold text-slate-600 admin-btn"
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                onClick={handlePinSubmit}
+                                className="flex-1 py-3 bg-slate-900 text-white rounded-xl font-bold admin-btn"
+                            >
+                                Entrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+            
+            const AdminPanel = () => {
+                const tabs = [
+                    { id: 'apariencia', label: 'Apariencia', icon: 'Palette' },
+                    { id: 'hero', label: 'Hero', icon: 'Type' },
+                    { id: 'servicios', label: 'Servicios', icon: 'List' },
+                    { id: 'contacto', label: 'Contacto', icon: 'Mail' }
+                ];
+                
+                // Estado para preview (solo se actualiza con botón)
+                const [previewConfig, setPreviewConfig] = useState(null);
+                const [showPreview, setShowPreview] = useState(false);
+                
+                // Config para edición (borrador)
+                const config = draftConfig || siteConfig;
+                
+                // Función para mostrar preview de la sección actual
+                const handlePreview = () => {
+                    setPreviewConfig(JSON.parse(JSON.stringify(config)));
+                    setShowPreview(true);
+                };
+                
+                // Cerrar preview
+                const closePreview = () => {
+                    setShowPreview(false);
+                };
+                
+                return (
+                    <div className="fixed inset-0 z-[9998] flex items-center justify-center">
+                        {/* Overlay oscuro */}
+                        <div className="absolute inset-0 bg-black/50" onClick={logoutAdmin}></div>
+                        
+                        {/* Panel centrado */}
+                        <div className="relative w-[480px] max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+                            {/* Header */}
+                            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Icon name="Settings" size={20} />
+                                    <span className="font-bold">Panel Admin</span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button onClick={handlePreview} className="p-2 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2" title="Previsualizar">
+                                        <Icon name="Eye" size={16} />
+                                        <span className="text-xs font-bold">Preview</span>
+                                    </button>
+                                    <button onClick={saveConfig} className="p-2 bg-green-500 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2" title="Guardar y aplicar">
+                                        <Icon name="Save" size={16} />
+                                        <span className="text-xs font-bold">Guardar</span>
+                                    </button>
+                                    <button onClick={logoutAdmin} className="p-2 bg-red-500 rounded-lg hover:bg-red-600 transition-colors" title="Cerrar">
+                                        <Icon name="X" size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {/* Tabs */}
+                            <div className="flex border-b bg-slate-50">
+                                {tabs.map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => { setActiveAdminTab(tab.id); setShowPreview(false); }}
+                                        className={`flex-1 py-3 text-xs font-bold uppercase flex flex-col items-center gap-1 transition-colors ${activeAdminTab === tab.id ? 'text-red-600 border-b-2 border-red-600 bg-white' : 'text-slate-400'}`}
+                                    >
+                                        <Icon name={tab.icon} size={16} />
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+                            
+                            {/* PREVIEW FLOTANTE (solo visible cuando se presiona Preview) */}
+                            {showPreview && previewConfig && (
+                                <div className="bg-slate-800 p-4 border-b">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                            <Icon name="Eye" size={14} /> Preview - {tabs.find(t => t.id === activeAdminTab)?.label}
+                                        </span>
+                                        <button onClick={closePreview} className="text-slate-400 hover:text-white">
+                                            <Icon name="X" size={16} />
+                                        </button>
+                                    </div>
+                                    
+                                    {/* Preview según la sección activa */}
+                                    <div className="bg-white rounded-xl p-4 overflow-hidden">
+                                        {activeAdminTab === 'apariencia' && (
+                                            <div className="space-y-3">
+                                                {/* Preview Logo */}
+                                                <div className="flex items-center gap-4 p-3 bg-slate-50 rounded-lg">
+                                                    <img 
+                                                        src={previewConfig.appearance.logoPath} 
+                                                        alt="Logo" 
+                                                        style={{ height: `${Math.min(previewConfig.appearance.logoSize, 50)}px` }}
+                                                        className="object-contain"
+                                                        onError={(e) => e.target.src = ''}
+                                                    />
+                                                    <div className="text-xs text-slate-500">
+                                                        Tamaño: {previewConfig.appearance.logoSize}px
+                                                    </div>
+                                                </div>
+                                                {/* Preview Colores */}
+                                                <div className="flex gap-2">
+                                                    <div className="flex-1 p-3 rounded-lg text-center text-white text-xs font-bold" style={{ backgroundColor: previewConfig.appearance.primaryColor }}>Primario</div>
+                                                    <div className="flex-1 p-3 rounded-lg text-center text-xs font-bold border" style={{ backgroundColor: previewConfig.appearance.secondaryColor, color: previewConfig.appearance.textColor }}>Fondo + Texto</div>
+                                                </div>
+                                                {/* Preview Font */}
+                                                <div className={`p-3 bg-slate-50 rounded-lg ${previewConfig.appearance.globalFont}`}>
+                                                    <span className="text-sm font-bold">Tipografía: {previewConfig.appearance.globalFont.replace('font-', '')}</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        
+                                        {activeAdminTab === 'hero' && (
+                                            <div className="space-y-2" style={{ backgroundColor: previewConfig.appearance.secondaryColor }}>
+                                                <span className="text-xs font-bold uppercase tracking-widest block border-l-4 pl-2" style={{ color: previewConfig.appearance.primaryColor, borderColor: previewConfig.appearance.primaryColor }}>
+                                                    {previewConfig.hero.tag}
+                                                </span>
+                                                <h2 className="text-2xl font-black leading-tight tracking-tighter" style={{ color: previewConfig.appearance.textColor }}>
+                                                    {previewConfig.hero.title1.text}
+                                                </h2>
+                                                <h2 className="text-2xl font-black leading-tight tracking-tighter italic" style={{ color: previewConfig.appearance.primaryColor }}>
+                                                    {previewConfig.hero.title2.text}
+                                                </h2>
+                                                <p className="text-xs text-slate-500 line-clamp-2">{previewConfig.hero.description.text}</p>
+                                                <button 
+                                                    className="px-4 py-2 rounded-lg text-xs font-bold uppercase"
+                                                    style={{ backgroundColor: previewConfig.hero.button.bgColor, color: previewConfig.hero.button.textColor }}
+                                                >
+                                                    {previewConfig.hero.button.text}
+                                                </button>
+                                                {/* Preview Especialidades */}
+                                                <div className="border-t border-slate-200 pt-3 mt-3">
+                                                    <h4 className="text-xs font-black uppercase text-center mb-2">{previewConfig.hero.specialties?.title || 'Nuestras Especialidades'}</h4>
+                                                    <div className="grid grid-cols-2 gap-1">
+                                                        {previewConfig.services.filter(s => (previewConfig.hero.specialties?.showIds || [1,2,3,7]).includes(s.id)).slice(0,4).map((s, i) => (
+                                                            <div key={i} className="text-center p-1 bg-slate-50 rounded">
+                                                                <Icon name={s.icon} size={12} className="mx-auto mb-1" style={{ color: previewConfig.appearance.primaryColor }} />
+                                                                <span className="text-[8px] font-bold block truncate">{s.title}</span>
+                                                                <span className="text-[6px] text-slate-400 block truncate">{previewConfig.hero.specialties?.descriptions?.[s.id] || s.desc}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        
+                                        {activeAdminTab === 'servicios' && (
+                                            <div className="grid grid-cols-4 gap-2">
+                                                {previewConfig.services.slice(0, 4).map((s, i) => (
+                                                    <div key={i} className="p-2 rounded-lg bg-slate-50 text-center">
+                                                        <div className="mb-1 flex justify-center" style={{ color: previewConfig.appearance.primaryColor }}>
+                                                            <Icon name={s.icon} size={16} />
+                                                        </div>
+                                                        <h3 className="font-bold text-[10px]">{s.title}</h3>
+                                                        <p className="text-[10px] font-black" style={{ color: previewConfig.appearance.primaryColor }}>{s.price}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        
+                                        {activeAdminTab === 'contacto' && (
+                                            <div 
+                                                className="p-4 rounded-lg space-y-2"
+                                                style={{ backgroundColor: previewConfig.contact?.bgColor || '#0f172a', color: previewConfig.contact?.textColor || '#ffffff' }}
+                                            >
+                                                {previewConfig.contact?.title?.show !== false && (
+                                                    <p className={`text-sm font-bold text-${previewConfig.contact?.title?.align || 'center'}`}>
+                                                        {previewConfig.contact?.title?.text || 'Contáctanos'}
+                                                    </p>
+                                                )}
+                                                {previewConfig.contact?.subtitle?.show !== false && (
+                                                    <p className={`text-[10px] opacity-70 text-${previewConfig.contact?.subtitle?.align || 'center'}`}>
+                                                        {previewConfig.contact?.subtitle?.text || 'Estamos aquí para ayudarte'}
+                                                    </p>
+                                                )}
+                                                <div className="text-[10px] space-y-1 opacity-80">
+                                                    {previewConfig.contact?.email?.show !== false && (
+                                                        <p className={`text-${previewConfig.contact?.email?.align || 'center'}`}>
+                                                            📧 {previewConfig.contact?.email?.value}
+                                                        </p>
+                                                    )}
+                                                    {previewConfig.contact?.phone?.show !== false && (
+                                                        <p className={`text-${previewConfig.contact?.phone?.align || 'center'}`}>
+                                                            📞 {previewConfig.contact?.phone?.value}
+                                                        </p>
+                                                    )}
+                                                    {previewConfig.contact?.whatsapp?.show !== false && (
+                                                        <p className={`text-${previewConfig.contact?.whatsapp?.align || 'center'}`}>
+                                                            💬 {previewConfig.contact?.whatsapp?.label || 'WhatsApp'}
+                                                        </p>
+                                                    )}
+                                                    {previewConfig.contact?.address?.show !== false && (
+                                                        <p className={`text-${previewConfig.contact?.address?.align || 'center'}`}>
+                                                            📍 {previewConfig.contact?.address?.value}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Content */}
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                {activeAdminTab === 'apariencia' && (
+                                    <>
+                                        <div className="admin-section bg-slate-50 p-4 rounded-r-xl">
+                                            <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
+                                                <Icon name="Image" size={16} className="text-red-600" /> Logo
+                                            </h4>
+                                            
+                                            {/* Preview del logo actual */}
+                                            <div className="bg-white rounded-xl p-4 mb-4 border-2 border-dashed border-slate-200 flex items-center justify-center">
+                                                <img 
+                                                    src={config.appearance.logoPath} 
+                                                    alt="Logo Preview" 
+                                                    className="max-h-20 object-contain"
+                                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                                />
+                                                <div className="hidden items-center justify-center text-slate-400 text-xs">
+                                                    <Icon name="Image" size={32} className="opacity-30" />
+                                                    <span className="ml-2">Sin preview</span>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Selector de logos disponibles */}
+                                            <label className="block text-xs text-slate-500 mb-2">Selecciona un logo:</label>
+                                            <div className="grid grid-cols-4 gap-2 mb-4 max-h-32 overflow-y-auto bg-white rounded-lg p-2">
+                                                {[1,2,3,4,5,6,7,8,9,10,11,12,13,14].map(n => (
+                                                    <button
+                                                        key={n}
+                                                        onClick={() => updateConfig('appearance.logoPath', `/assets/logos/logo${n}.png`)}
+                                                        className={`p-2 rounded-lg border-2 transition-all hover:border-red-400 ${config.appearance.logoPath === `/assets/logos/logo${n}.png` ? 'border-red-600 bg-red-50' : 'border-slate-200'}`}
+                                                        title={`logo${n}.png`}
+                                                    >
+                                                        <img 
+                                                            src={`/assets/logos/logo${n}.png`} 
+                                                            alt={`Logo ${n}`}
+                                                            className="w-full h-8 object-contain"
+                                                            onError={(e) => e.target.style.opacity = '0.3'}
+                                                        />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            
+                                            <label className="block text-xs text-slate-500 mb-1">O escribe la ruta:</label>
+                                            <input
+                                                type="text"
+                                                key={config.appearance.logoPath}
+                                                defaultValue={config.appearance.logoPath}
+                                                onBlur={(e) => updateConfig('appearance.logoPath', e.target.value)}
+                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm"
+                                                placeholder="/assets/logos/logo.png"
+                                            />
+                                            <label className="block text-xs text-slate-500 mb-1 mt-3">Tamaño (px)</label>
+                                            <input
+                                                type="number"
+                                                key={config.appearance.logoSize}
+                                                defaultValue={config.appearance.logoSize}
+                                                onBlur={(e) => updateConfig('appearance.logoSize', parseInt(e.target.value) || 60)}
+                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm"
+                                            />
+                                        </div>
+                                        
+                                        <div className="admin-section bg-slate-50 p-4 rounded-r-xl">
+                                            <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
+                                                <Icon name="Palette" size={16} className="text-red-600" /> Colores
+                                            </h4>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="block text-xs text-slate-500 mb-1">Primario</label>
+                                                    <div className="flex gap-2">
+                                                        <input type="color" defaultValue={config.appearance.primaryColor} onBlur={(e) => updateConfig('appearance.primaryColor', e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
+                                                        <input type="text" key={config.appearance.primaryColor} defaultValue={config.appearance.primaryColor} onBlur={(e) => updateConfig('appearance.primaryColor', e.target.value)} className="flex-1 px-2 py-1 rounded admin-input bg-white text-xs" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-slate-500 mb-1">Fondo</label>
+                                                    <div className="flex gap-2">
+                                                        <input type="color" defaultValue={config.appearance.secondaryColor} onBlur={(e) => updateConfig('appearance.secondaryColor', e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
+                                                        <input type="text" key={config.appearance.secondaryColor} defaultValue={config.appearance.secondaryColor} onBlur={(e) => updateConfig('appearance.secondaryColor', e.target.value)} className="flex-1 px-2 py-1 rounded admin-input bg-white text-xs" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-slate-500 mb-1">Texto</label>
+                                                    <div className="flex gap-2">
+                                                        <input type="color" defaultValue={config.appearance.textColor} onBlur={(e) => updateConfig('appearance.textColor', e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
+                                                        <input type="text" key={config.appearance.textColor} defaultValue={config.appearance.textColor} onBlur={(e) => updateConfig('appearance.textColor', e.target.value)} className="flex-1 px-2 py-1 rounded admin-input bg-white text-xs" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="admin-section bg-slate-50 p-4 rounded-r-xl">
+                                            <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
+                                                <Icon name="Type" size={16} className="text-red-600" /> Tipografía
+                                            </h4>
+                                            <select
+                                                defaultValue={config.appearance.globalFont}
+                                                onBlur={(e) => updateConfig('appearance.globalFont', e.target.value)}
+                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm"
+                                            >
+                                                <option value="font-sans">Inter (Sans)</option>
+                                                <option value="font-montserrat">Montserrat</option>
+                                                <option value="font-poppins">Poppins</option>
+                                            </select>
+                                        </div>
+                                    </>
+                                )}
+                                
+                                {activeAdminTab === 'hero' && (
+                                    <>
+                                        <div className="admin-section bg-slate-50 p-4 rounded-r-xl">
+                                            <h4 className="font-bold text-sm mb-3">Etiqueta Superior</h4>
+                                            <input
+                                                type="text"
+                                                key={config.hero.tag}
+                                                defaultValue={config.hero.tag}
+                                                onBlur={(e) => updateConfig('hero.tag', e.target.value)}
+                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm"
+                                            />
+                                        </div>
+                                        
+                                        <div className="admin-section bg-slate-50 p-4 rounded-r-xl">
+                                            <h4 className="font-bold text-sm mb-3">Título Principal</h4>
+                                            <input
+                                                type="text"
+                                                key={config.hero.title1.text}
+                                                defaultValue={config.hero.title1.text}
+                                                onBlur={(e) => updateConfig('hero.title1.text', e.target.value)}
+                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm mb-2"
+                                                placeholder="Línea 1"
+                                            />
+                                            <input
+                                                type="text"
+                                                key={config.hero.title2.text}
+                                                defaultValue={config.hero.title2.text}
+                                                onBlur={(e) => updateConfig('hero.title2.text', e.target.value)}
+                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm"
+                                                placeholder="Línea 2"
+                                            />
+                                        </div>
+                                        
+                                        <div className="admin-section bg-slate-50 p-4 rounded-r-xl">
+                                            <h4 className="font-bold text-sm mb-3">Descripción</h4>
+                                            <textarea
+                                                key={config.hero.description.text}
+                                                defaultValue={config.hero.description.text}
+                                                onBlur={(e) => updateConfig('hero.description.text', e.target.value)}
+                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm h-24 resize-none"
+                                            />
+                                        </div>
+                                        
+                                        <div className="admin-section bg-slate-50 p-4 rounded-r-xl">
+                                            <h4 className="font-bold text-sm mb-3">Botón CTA</h4>
+                                            <input
+                                                type="text"
+                                                key={config.hero.button.text}
+                                                defaultValue={config.hero.button.text}
+                                                onBlur={(e) => updateConfig('hero.button.text', e.target.value)}
+                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm mb-2"
+                                                placeholder="Texto del botón"
+                                            />
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label className="text-xs text-slate-500">Fondo</label>
+                                                    <input type="color" defaultValue={config.hero.button.bgColor} onBlur={(e) => updateConfig('hero.button.bgColor', e.target.value)} className="w-full h-8 rounded cursor-pointer" />
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs text-slate-500">Texto</label>
+                                                    <input type="color" defaultValue={config.hero.button.textColor} onBlur={(e) => updateConfig('hero.button.textColor', e.target.value)} className="w-full h-8 rounded cursor-pointer" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Sección Nuestras Especialidades */}
+                                        <div className="admin-section bg-slate-50 p-4 rounded-r-xl">
+                                            <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
+                                                <Icon name="Star" size={16} className="text-red-600" /> Sección Especialidades
+                                            </h4>
+                                            <label className="text-xs text-slate-500">Título de la sección</label>
+                                            <input
+                                                type="text"
+                                                key={config.hero.specialties?.title || 'spec-title'}
+                                                defaultValue={config.hero.specialties?.title || 'Nuestras Especialidades'}
+                                                onBlur={(e) => updateConfig('hero.specialties.title', e.target.value)}
+                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm mb-3"
+                                            />
+                                            
+                                            <label className="text-xs text-slate-500 block mb-2">Selecciona servicios y edita sus descripciones:</label>
+                                            <div className="space-y-2 max-h-64 overflow-y-auto">
+                                                {config.services.map(service => {
+                                                    const isSelected = (config.hero.specialties?.showIds || [1,2,3,7]).includes(service.id);
+                                                    return (
+                                                        <div key={service.id} className={`p-3 rounded-lg border-2 transition-all ${isSelected ? 'border-red-600 bg-red-50' : 'border-slate-200 bg-white'}`}>
+                                                            <button
+                                                                onClick={() => {
+                                                                    const currentIds = config.hero.specialties?.showIds || [1,2,3,7];
+                                                                    let newIds = currentIds.includes(service.id)
+                                                                        ? currentIds.filter(id => id !== service.id)
+                                                                        : [...currentIds, service.id];
+                                                                    updateConfig('hero.specialties.showIds', newIds);
+                                                                }}
+                                                                className="w-full flex items-center justify-between"
+                                                            >
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${isSelected ? 'bg-red-600 border-red-600' : 'border-slate-300'}`}>
+                                                                        {isSelected && <Icon name="Check" size={10} className="text-white" />}
+                                                                    </div>
+                                                                    <Icon name={service.icon} size={14} className="text-red-600" />
+                                                                    <span className="text-xs font-bold">{service.title}</span>
+                                                                </div>
+                                                            </button>
+                                                            {isSelected && (
+                                                                <div className="mt-2 pt-2 border-t border-red-200">
+                                                                    <label className="text-[10px] text-slate-500 block mb-1">Descripción para especialidades:</label>
+                                                                    <textarea
+                                                                        key={`spec-desc-${service.id}-${config.hero.specialties?.descriptions?.[service.id] || ''}`}
+                                                                        defaultValue={config.hero.specialties?.descriptions?.[service.id] || service.desc}
+                                                                        onBlur={(e) => {
+                                                                            const currentDescs = config.hero.specialties?.descriptions || {};
+                                                                            updateConfig('hero.specialties.descriptions', {...currentDescs, [service.id]: e.target.value});
+                                                                        }}
+                                                                        className="w-full px-2 py-1 rounded admin-input bg-white text-xs h-12 resize-none"
+                                                                        placeholder="Descripción corta de esta especialidad..."
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                            <p className="text-xs text-slate-400 mt-2">
+                                                Seleccionados: {(config.hero.specialties?.showIds || [1,2,3,7]).length} servicios
+                                            </p>
+                                        </div>
+                                    </>
+                                )}
+                                
+                                {activeAdminTab === 'servicios' && (
+                                    <>
+                                        <p className="text-xs text-slate-500 mb-3">Haz clic en un servicio para editarlo</p>
+                                        {config.services.map(service => (
+                                            <div key={service.id} className="admin-section bg-slate-50 p-4 rounded-r-xl">
+                                                <button
+                                                    onClick={() => setEditingService(editingService === service.id ? null : service.id)}
+                                                    className="w-full flex items-center justify-between"
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <Icon name={service.icon} size={16} className="text-red-600" />
+                                                        <span className="font-bold text-sm">{service.title}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-slate-500">{service.price}</span>
+                                                        <Icon name={editingService === service.id ? 'ChevronUp' : 'ChevronDown'} size={16} />
+                                                    </div>
+                                                </button>
+                                                
+                                                {editingService === service.id && (
+                                                    <div className="mt-4 space-y-3 border-t pt-4">
+                                                        <div>
+                                                            <label className="text-xs text-slate-500">Título</label>
+                                                            <input
+                                                                type="text"
+                                                                key={`title-${service.id}-${service.title}`}
+                                                                defaultValue={service.title}
+                                                                onBlur={(e) => updateService(service.id, 'title', e.target.value)}
+                                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs text-slate-500">Precio</label>
+                                                            <input
+                                                                type="text"
+                                                                key={`price-${service.id}-${service.price}`}
+                                                                defaultValue={service.price}
+                                                                onBlur={(e) => updateService(service.id, 'price', e.target.value)}
+                                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs text-slate-500">Descripción</label>
+                                                            <textarea
+                                                                key={`desc-${service.id}-${service.desc}`}
+                                                                defaultValue={service.desc}
+                                                                onBlur={(e) => updateService(service.id, 'desc', e.target.value)}
+                                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm h-16 resize-none"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs text-slate-500">Icono</label>
+                                                            <select
+                                                                defaultValue={service.icon}
+                                                                onBlur={(e) => updateService(service.id, 'icon', e.target.value)}
+                                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm"
+                                                            >
+                                                                {Object.keys(ICONS).map(icon => (
+                                                                    <option key={icon} value={icon}>{icon}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs text-slate-500">Características (una por línea)</label>
+                                                            <textarea
+                                                                key={`feat-${service.id}-${service.features.length}`}
+                                                                defaultValue={service.features.join('\n')}
+                                                                onBlur={(e) => updateService(service.id, 'features', e.target.value.split('\n').filter(f => f.trim()))}
+                                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm h-24 resize-none"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </>
+                                )}
+                                
+                                {activeAdminTab === 'contacto' && (
+                                    <>
+                                        {/* Colores generales */}
+                                        <div className="admin-section bg-slate-50 p-4 rounded-r-xl">
+                                            <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
+                                                <Icon name="Palette" size={16} className="text-red-600" /> Colores Generales
+                                            </h4>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="text-xs text-slate-500">Fondo</label>
+                                                    <div className="flex gap-2">
+                                                        <input type="color" defaultValue={config.contact?.bgColor || '#0f172a'} onBlur={(e) => updateConfig('contact.bgColor', e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
+                                                        <input type="text" key={config.contact?.bgColor} defaultValue={config.contact?.bgColor || '#0f172a'} onBlur={(e) => updateConfig('contact.bgColor', e.target.value)} className="flex-1 px-2 py-1 rounded admin-input bg-white text-xs" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs text-slate-500">Texto</label>
+                                                    <div className="flex gap-2">
+                                                        <input type="color" defaultValue={config.contact?.textColor || '#ffffff'} onBlur={(e) => updateConfig('contact.textColor', e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
+                                                        <input type="text" key={config.contact?.textColor} defaultValue={config.contact?.textColor || '#ffffff'} onBlur={(e) => updateConfig('contact.textColor', e.target.value)} className="flex-1 px-2 py-1 rounded admin-input bg-white text-xs" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Componente reutilizable para cada elemento */}
+                                        {[
+                                            {key: 'title', icon: 'Type', label: 'Título', placeholder: 'Contáctanos', inputType: 'text'},
+                                            {key: 'subtitle', icon: 'FileText', label: 'Subtítulo', placeholder: 'Estamos aquí para ayudarte', inputType: 'text'},
+                                            {key: 'email', icon: 'Mail', label: 'Email', placeholder: 'info@ejemplo.com', inputType: 'email', isValue: true},
+                                            {key: 'phone', icon: 'Phone', label: 'Teléfono', placeholder: '+56 9 1234 5678', inputType: 'text', isValue: true},
+                                            {key: 'whatsapp', icon: 'MessageCircle', label: 'WhatsApp', placeholder: '+56912345678', inputType: 'text', isValue: true, hasLabel: true},
+                                            {key: 'address', icon: 'MapPin', label: 'Dirección', placeholder: 'Santiago, Chile', inputType: 'text', isValue: true}
+                                        ].map(item => {
+                                            const itemConfig = config.contact?.[item.key] || {};
+                                            const textValue = item.isValue ? (itemConfig.value || '') : (itemConfig.text || '');
+                                            const isVisible = itemConfig.show !== false;
+                                            const alignment = itemConfig.align || 'center';
+                                            
+                                            return (
+                                                <div key={item.key} className={`admin-section p-4 rounded-r-xl border-l-4 ${isVisible ? 'bg-slate-50 border-green-500' : 'bg-slate-100 border-slate-300 opacity-60'}`}>
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <h4 className="font-bold text-sm flex items-center gap-2">
+                                                            <Icon name={item.icon} size={16} className="text-red-600" /> {item.label}
+                                                        </h4>
+                                                        <button
+                                                            onClick={() => updateConfig(`contact.${item.key}.show`, !isVisible)}
+                                                            className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${
+                                                                isVisible ? 'bg-green-500 text-white' : 'bg-slate-300 text-slate-600'
+                                                            }`}
+                                                        >
+                                                            {isVisible ? 'Visible' : 'Oculto'}
+                                                        </button>
+                                                    </div>
+                                                    
+                                                    <input
+                                                        type={item.inputType}
+                                                        key={`${item.key}-${textValue}`}
+                                                        defaultValue={textValue}
+                                                        onBlur={(e) => updateConfig(`contact.${item.key}.${item.isValue ? 'value' : 'text'}`, e.target.value)}
+                                                        className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm mb-2"
+                                                        placeholder={item.placeholder}
+                                                    />
+                                                    
+                                                    {item.hasLabel && (
+                                                        <>
+                                                            <label className="text-[10px] text-slate-500">Etiqueta visible</label>
+                                                            <input
+                                                                type="text"
+                                                                key={`${item.key}-label-${itemConfig.label}`}
+                                                                defaultValue={itemConfig.label || 'WhatsApp'}
+                                                                onBlur={(e) => updateConfig(`contact.${item.key}.label`, e.target.value)}
+                                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm mb-2"
+                                                                placeholder="WhatsApp"
+                                                            />
+                                                        </>
+                                                    )}
+                                                    
+                                                    <label className="text-[10px] text-slate-500 block mb-1">Alineación</label>
+                                                    <div className="flex gap-1">
+                                                        {['left', 'center', 'right'].map(align => (
+                                                            <button
+                                                                key={align}
+                                                                onClick={() => updateConfig(`contact.${item.key}.align`, align)}
+                                                                className={`flex-1 py-1.5 rounded border-2 transition-all ${
+                                                                    alignment === align
+                                                                        ? 'border-red-600 bg-red-50 text-red-600'
+                                                                        : 'border-slate-200 bg-white hover:border-red-300'
+                                                                }`}
+                                                            >
+                                                                <Icon name={align === 'left' ? 'AlignLeft' : align === 'center' ? 'AlignCenter' : 'AlignRight'} size={12} className="mx-auto" />
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        
+                                        {/* Footer */}
+                                        <div className="admin-section bg-slate-50 p-4 rounded-r-xl">
+                                            <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
+                                                <Icon name="FileText" size={16} className="text-red-600" /> Texto del Footer
+                                            </h4>
+                                            <input
+                                                type="text"
+                                                key={config.contact?.footerText}
+                                                defaultValue={config.contact?.footerText || 'Sos.Tecnopc © 2026'}
+                                                onBlur={(e) => updateConfig('contact.footerText', e.target.value)}
+                                                className="w-full px-3 py-2 rounded-lg admin-input bg-white text-sm"
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                            
+                            {/* Footer */}
+                            <div className="p-3 bg-slate-100 text-center text-xs text-slate-500">
+                                <kbd className="px-2 py-1 bg-white rounded text-slate-700 font-mono">Ctrl+Shift+K</kbd> para abrir/cerrar
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
             return (
                 <div className={`min-h-screen ${siteConfig.appearance.globalFont}`} style={{ backgroundColor: siteConfig.appearance.secondaryColor }}>
+
+                    {/* SISTEMA ADMIN OCULTO */}
+                    {showPinModal && <PinModal />}
+                    {showAdminPanel && <AdminPanel />}
 
                     {/* Navbar Dinámica */}
                     <nav className={`fixed w-full z-50 transition-all ${scrolled || currentView === 'tarifas' ? 'bg-white shadow-md py-3' : 'bg-transparent py-6'}`}>
@@ -307,15 +1223,15 @@
                                     </div>
                                 </section>
                                 
-                                <section className="py-24 bg-white">
+                                <section className="py-24" style={{ backgroundColor: siteConfig.appearance.secondaryColor }}>
                                     <div className="container mx-auto px-6 text-center">
-                                        <h2 className="text-4xl font-black mb-16 uppercase tracking-tighter">Nuestras Especialidades</h2>
+                                        <h2 className="text-4xl font-black mb-16 uppercase tracking-tighter">{siteConfig.hero.specialties?.title || 'Nuestras Especialidades'}</h2>
                                         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                                            {siteConfig.services.filter(s => s.id === 1 || s.id === 2 || s.id === 3 || s.id === 7).map((s, i) => (
+                                            {siteConfig.services.filter(s => (siteConfig.hero.specialties?.showIds || [1,2,3,7]).includes(s.id)).map((s, i) => (
                                                 <div key={i} className="group p-10 rounded-[2rem] bg-slate-50 hover:bg-white hover:shadow-2xl transition-all border border-transparent hover:border-red-600/10">
                                                     <div className="mb-6 flex justify-center text-red-600 group-hover:scale-110 transition-transform"><Icon name={s.icon} size={32} /></div>
                                                     <h3 className="font-black uppercase mb-2">{s.title}</h3>
-                                                    <p className="text-xs text-slate-500">{s.desc}</p>
+                                                    <p className="text-xs text-slate-500">{siteConfig.hero.specialties?.descriptions?.[s.id] || s.desc}</p>
                                                 </div>
                                             ))}
                                         </div>
@@ -348,14 +1264,154 @@
                                                         </div>
                                                     ))}
                                                 </div>
-                                                <button className="mt-8 w-full py-4 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-600 transition-colors">Solicitar Servicio</button>
+                                                <button 
+                                                    onClick={() => requestService(s.title)}
+                                                    className="mt-8 w-full py-4 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-600 transition-colors"
+                                                >
+                                                    Solicitar Servicio
+                                                </button>
                                             </div>
                                         ))}
                                     </div>
-                                    {/* Formulario de Contacto (Simplificado) */}
-                                    <div className="bg-slate-900 rounded-[3rem] p-12 text-white shadow-2xl">
-                                        <h3 className="text-3xl font-black uppercase mb-6">Contáctanos</h3>
-                                        <p className="text-slate-400 mb-8">info@sostecnopc.com | +54 9 11 2233-4455</p>
+                                    {/* Sección de Contacto con Formulario */}
+                                    <div 
+                                        className="rounded-[3rem] p-12 shadow-2xl"
+                                        style={{ backgroundColor: siteConfig.contact?.bgColor || '#0f172a', color: siteConfig.contact?.textColor || '#ffffff' }}
+                                    >
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                                            {/* Columna Izquierda - Info de Contacto */}
+                                            <div>
+                                                {/* Título */}
+                                                {siteConfig.contact?.title?.show !== false && (
+                                                    <h3 className={`text-3xl font-black uppercase mb-4 text-${siteConfig.contact?.title?.align || 'center'}`}>
+                                                        {siteConfig.contact?.title?.text || 'Contáctanos'}
+                                                    </h3>
+                                                )}
+                                                
+                                                {/* Subtítulo */}
+                                                {siteConfig.contact?.subtitle?.show !== false && (
+                                                    <p className={`opacity-70 mb-6 text-${siteConfig.contact?.subtitle?.align || 'center'}`}>
+                                                        {siteConfig.contact?.subtitle?.text || 'Estamos aquí para ayudarte'}
+                                                    </p>
+                                                )}
+                                                
+                                                {/* Email */}
+                                                {siteConfig.contact?.email?.show !== false && (
+                                                    <div className={`mb-3 flex text-${siteConfig.contact?.email?.align || 'center'} ${siteConfig.contact?.email?.align === 'left' ? 'justify-start' : siteConfig.contact?.email?.align === 'right' ? 'justify-end' : 'justify-center'}`}>
+                                                        <a href={`mailto:${siteConfig.contact?.email?.value}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity text-sm">
+                                                            <Icon name="Mail" size={18} /> {siteConfig.contact?.email?.value}
+                                                        </a>
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Teléfono */}
+                                                {siteConfig.contact?.phone?.show !== false && (
+                                                    <div className={`mb-3 flex text-${siteConfig.contact?.phone?.align || 'center'} ${siteConfig.contact?.phone?.align === 'left' ? 'justify-start' : siteConfig.contact?.phone?.align === 'right' ? 'justify-end' : 'justify-center'}`}>
+                                                        <a href={`tel:${siteConfig.contact?.phone?.value?.replace(/\s/g, '')}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity text-sm">
+                                                            <Icon name="Phone" size={18} /> {siteConfig.contact?.phone?.value}
+                                                        </a>
+                                                    </div>
+                                                )}
+                                                
+                                                {/* WhatsApp */}
+                                                {siteConfig.contact?.whatsapp?.show !== false && (
+                                                    <div className={`mb-3 flex text-${siteConfig.contact?.whatsapp?.align || 'center'} ${siteConfig.contact?.whatsapp?.align === 'left' ? 'justify-start' : siteConfig.contact?.whatsapp?.align === 'right' ? 'justify-end' : 'justify-center'}`}>
+                                                        <a href={`https://wa.me/${siteConfig.contact?.whatsapp?.value?.replace(/[^0-9]/g, '')}`} target="_blank" className="flex items-center gap-2 hover:opacity-80 transition-opacity text-sm">
+                                                            <Icon name="MessageCircle" size={18} /> {siteConfig.contact?.whatsapp?.label || 'WhatsApp'}
+                                                        </a>
+                                                    </div>
+                                                )}
+                                                
+                                                {/* Dirección */}
+                                                {siteConfig.contact?.address?.show !== false && siteConfig.contact?.address?.value && (
+                                                    <div className={`mt-4 opacity-60 text-sm flex items-center gap-2 ${siteConfig.contact?.address?.align === 'left' ? 'justify-start' : siteConfig.contact?.address?.align === 'right' ? 'justify-end' : 'justify-center'}`}>
+                                                        <Icon name="MapPin" size={16} /> {siteConfig.contact?.address?.value}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Columna Derecha - Formulario */}
+                                            <div ref={contactFormRef} className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                                                <h4 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                                    <Icon name="Send" size={20} /> Envíanos un mensaje
+                                                </h4>
+                                                <form className="space-y-4" onSubmit={(e) => {
+                                                    e.preventDefault();
+                                                    const formData = new FormData(e.target);
+                                                    const data = Object.fromEntries(formData);
+                                                    const mailtoLink = `mailto:${siteConfig.contact?.email?.value || 'info@sostecnopc.com'}?subject=${encodeURIComponent(`[${data.service}] Consulta de ${data.name}`)}` +
+                                                        `&body=${encodeURIComponent(`Nombre: ${data.name}\nEmpresa: ${data.company}\nEmail: ${data.email}\nServicio: ${data.service}\n\nMensaje:\n${data.message}`)}`;
+                                                    window.location.href = mailtoLink;
+                                                }}>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-xs opacity-70 mb-1">Nombre *</label>
+                                                            <input 
+                                                                type="text" 
+                                                                name="name"
+                                                                required
+                                                                className="w-full px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/50 text-sm focus:outline-none focus:border-white/60 transition-colors"
+                                                                placeholder="Tu nombre"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs opacity-70 mb-1">Email *</label>
+                                                            <input 
+                                                                type="email" 
+                                                                name="email"
+                                                                required
+                                                                className="w-full px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/50 text-sm focus:outline-none focus:border-white/60 transition-colors"
+                                                                placeholder="tu@email.com"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs opacity-70 mb-1">Empresa</label>
+                                                        <input 
+                                                            type="text" 
+                                                            name="company"
+                                                            className="w-full px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/50 text-sm focus:outline-none focus:border-white/60 transition-colors"
+                                                            placeholder="Nombre de tu empresa (opcional)"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs opacity-70 mb-1">Tipo de Servicio / Consulta *</label>
+                                                        <select 
+                                                            name="service"
+                                                            required
+                                                            value={selectedService}
+                                                            onChange={(e) => setSelectedService(e.target.value)}
+                                                            className="w-full px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white text-sm focus:outline-none focus:border-white/60 transition-colors appearance-none cursor-pointer"
+                                                            style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                                                        >
+                                                            <option value="" className="text-slate-900">Selecciona una opción</option>
+                                                            {siteConfig.services.map(s => (
+                                                                <option key={s.id} value={s.title} className="text-slate-900">{s.title}</option>
+                                                            ))}
+                                                            <option value="Consulta General" className="text-slate-900">Consulta General</option>
+                                                            <option value="Presupuesto" className="text-slate-900">Solicitar Presupuesto</option>
+                                                            <option value="Otro" className="text-slate-900">Otro</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs opacity-70 mb-1">Mensaje *</label>
+                                                        <textarea 
+                                                            name="message"
+                                                            required
+                                                            rows={4}
+                                                            className="w-full px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/50 text-sm focus:outline-none focus:border-white/60 transition-colors resize-none"
+                                                            placeholder="Describe tu consulta o proyecto..."
+                                                        />
+                                                    </div>
+                                                    <button 
+                                                        type="submit"
+                                                        className="w-full py-4 bg-white text-slate-900 font-bold uppercase tracking-widest rounded-xl hover:bg-red-600 hover:text-white transition-all text-sm flex items-center justify-center gap-2"
+                                                    >
+                                                        <Icon name="Send" size={16} /> Enviar Mensaje
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -366,7 +1422,7 @@
                     <footer className="py-16 border-t border-slate-100 bg-white">
                         <div className="container mx-auto px-6 text-center">
                             <Logo />
-                            <div className="text-[9px] font-black text-slate-300 tracking-[0.4em] uppercase mt-4">Sos.Tecnopc © 2026</div>
+                            <div className="text-[9px] font-black text-slate-300 tracking-[0.4em] uppercase mt-4">{siteConfig.contact?.footerText || 'Sos.Tecnopc © 2026'}</div>
                         </div>
                     </footer>
 
