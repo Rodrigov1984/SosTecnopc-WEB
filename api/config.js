@@ -14,8 +14,8 @@ const defaultConfig = {
     primaryColor: '#E30613',
     secondaryColor: '#f8fafc',
     textColor: '#0f172a',
-    logoPath: "/assets/logos/Sos Tecno Pc Logo.png",
-    logoSize: 200,
+    logoPath: "/assets/logos/Sos Tecno Pc Logo - Facebook Cover Photo - 2460x936.png",
+    logoSize: 60,
     globalFont: 'font-sans',
     nav: {
       font: 'font-sans',
