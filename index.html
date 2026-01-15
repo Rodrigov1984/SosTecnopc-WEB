@@ -62,25 +62,38 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- UTILIDADES DE PERSISTENCIA ---
-        const STORAGE_KEY = 'sostecnopc_config';
-        const USERS_KEY = 'sostecnopc_users';
+        // --- UTILIDADES DE PERSISTENCIA (API + localStorage fallback) ---
+        const API_BASE = '/api';
         
-        const loadFromStorage = (key, defaultValue) => {
+        const loadFromAPI = async (endpoint, defaultValue) => {
             try {
-                const saved = localStorage.getItem(key);
-                return saved ? JSON.parse(saved) : defaultValue;
+                const response = await fetch(`${API_BASE}/${endpoint}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    // Guardar en localStorage como cache
+                    localStorage.setItem(`sostecnopc_${endpoint}`, JSON.stringify(data));
+                    return data;
+                }
+                throw new Error('API not available');
             } catch (e) {
-                console.warn('Error loading from localStorage:', e);
-                return defaultValue;
+                // Fallback a localStorage
+                const cached = localStorage.getItem(`sostecnopc_${endpoint}`);
+                return cached ? JSON.parse(cached) : defaultValue;
             }
         };
         
-        const saveToStorage = (key, value) => {
+        const saveToAPI = async (endpoint, value) => {
+            // Siempre guardar en localStorage primero (inmediato)
+            localStorage.setItem(`sostecnopc_${endpoint}`, JSON.stringify(value));
+            
             try {
-                localStorage.setItem(key, JSON.stringify(value));
+                await fetch(`${API_BASE}/${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(value)
+                });
             } catch (e) {
-                console.warn('Error saving to localStorage:', e);
+                console.warn('API save failed, using localStorage only:', e);
             }
         };
 
@@ -206,18 +219,37 @@
             const [isMenuOpen, setIsMenuOpen] = useState(false);
             const [logoError, setLogoError] = useState(false);
             
-            // CMS State - Cargar desde localStorage si existe
-            const [siteConfig, setSiteConfig] = useState(() => loadFromStorage(STORAGE_KEY, initialConfig));
-            const [users, setUsers] = useState(() => loadFromStorage(USERS_KEY, initialUsers));
+            // CMS State - Inicializar con valores por defecto
+            const [siteConfig, setSiteConfig] = useState(initialConfig);
+            const [users, setUsers] = useState(initialUsers);
+            const [isLoading, setIsLoading] = useState(true);
             
-            // Persistir cambios en localStorage
+            // Cargar datos desde API al iniciar
             useEffect(() => {
-                saveToStorage(STORAGE_KEY, siteConfig);
-            }, [siteConfig]);
+                const loadData = async () => {
+                    const [configData, usersData] = await Promise.all([
+                        loadFromAPI('config', initialConfig),
+                        loadFromAPI('users', initialUsers)
+                    ]);
+                    setSiteConfig(configData);
+                    setUsers(usersData);
+                    setIsLoading(false);
+                };
+                loadData();
+            }, []);
+            
+            // Persistir cambios en API
+            useEffect(() => {
+                if (!isLoading) {
+                    saveToAPI('config', siteConfig);
+                }
+            }, [siteConfig, isLoading]);
             
             useEffect(() => {
-                saveToStorage(USERS_KEY, users);
-            }, [users]);
+                if (!isLoading) {
+                    saveToAPI('users', users);
+                }
+            }, [users, isLoading]);
             const [currentUser, setCurrentUser] = useState(null);
             
             // Admin Panel State

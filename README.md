@@ -6,7 +6,8 @@ Landing page profesional para servicios informáticos con CMS integrado.
 
 - **React 18** + **Tailwind CSS** (vía CDN)
 - **Panel de administración** con login y edición en tiempo real
-- **Persistencia de datos** en localStorage
+- **Backend API** con Node.js para persistencia de datos
+- **Fallback a localStorage** cuando la API no está disponible
 - **Diseño responsive** optimizado para móviles
 - **SEO optimizado** con meta tags y Open Graph
 
@@ -15,6 +16,9 @@ Landing page profesional para servicios informáticos con CMS integrado.
 ```
 SosTecnopc-WEB/
 ├── index.html      # Aplicación principal
+├── api/
+│   ├── config.js   # API endpoint para configuración
+│   └── users.js    # API endpoint para usuarios
 ├── vercel.json     # Configuración de Vercel
 └── README.md       # Este archivo
 ```
