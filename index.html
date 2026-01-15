@@ -81,21 +81,6 @@
                 return cached ? JSON.parse(cached) : defaultValue;
             }
         };
-        
-        const saveToAPI = async (endpoint, value) => {
-            // Siempre guardar en localStorage primero (inmediato)
-            localStorage.setItem(`sostecnopc_${endpoint}`, JSON.stringify(value));
-            
-            try {
-                await fetch(`${API_BASE}/${endpoint}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(value)
-                });
-            } catch (e) {
-                console.warn('API save failed, using localStorage only:', e);
-            }
-        };
 
         // --- SISTEMA DE ICONOS INTEGRADO ---
         const ICONS = {
@@ -151,16 +136,12 @@
         };
 
         // --- Data Inicial ---
-        const initialUsers = [
-            { id: 1, username: 'admin', password: 'admin', role: 'admin' }
-        ];
-
         const initialConfig = {
             appearance: {
                 primaryColor: '#E30613',
                 secondaryColor: '#f8fafc',
                 textColor: '#0f172a',
-                logoPath: "Sos Tecno Pc Logo - Email Signature.png",
+                logoPath: "/assets/logos/Sos Tecno Pc Logo - Original with Transparent Background - 5000x5000 (1).png",
                 logoSize: 40,
                 globalFont: 'font-sans',
                 nav: {
@@ -221,54 +202,17 @@
             
             // CMS State - Inicializar con valores por defecto
             const [siteConfig, setSiteConfig] = useState(initialConfig);
-            const [users, setUsers] = useState(initialUsers);
             const [isLoading, setIsLoading] = useState(true);
             
-            // Cargar datos desde API al iniciar
+            // Cargar datos desde localStorage al iniciar
             useEffect(() => {
                 const loadData = async () => {
-                    const [configData, usersData] = await Promise.all([
-                        loadFromAPI('config', initialConfig),
-                        loadFromAPI('users', initialUsers)
-                    ]);
+                    const configData = await loadFromAPI('config', initialConfig);
                     setSiteConfig(configData);
-                    setUsers(usersData);
                     setIsLoading(false);
                 };
                 loadData();
             }, []);
-            
-            // Persistir cambios en API
-            useEffect(() => {
-                if (!isLoading) {
-                    saveToAPI('config', siteConfig);
-                }
-            }, [siteConfig, isLoading]);
-            
-            useEffect(() => {
-                if (!isLoading) {
-                    saveToAPI('users', users);
-                }
-            }, [users, isLoading]);
-            const [currentUser, setCurrentUser] = useState(null);
-            
-            // Admin Panel State
-            const [isAdminOpen, setIsAdminOpen] = useState(false);
-            const [adminTab, setAdminTab] = useState('appearance');
-            const [activeSection, setActiveSection] = useState(null); 
-            
-            // Form States
-            const [loginUser, setLoginUser] = useState('');
-            const [loginPass, setLoginPass] = useState('');
-            const [loginError, setLoginError] = useState('');
-            const [newUser, setNewUser] = useState('');
-            const [newPass, setNewPass] = useState('');
-            const [editingUserId, setEditingUserId] = useState(null);
-            const [editPass, setEditPass] = useState('');
-
-            // Refs
-            const heroRef = useRef(null);
-            const servicesRef = useRef(null);
 
             useEffect(() => {
                 const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -277,99 +221,6 @@
             }, []);
 
             useEffect(() => { window.scrollTo(0, 0); }, [currentView]);
-
-            // Auto-scroll
-            useEffect(() => {
-                if (isAdminOpen) {
-                    if (activeSection === 'hero' && heroRef.current) {
-                        heroRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } else if (activeSection === 'services' && servicesRef.current) {
-                        if(currentView !== 'tarifas') setCurrentView('tarifas'); 
-                        setTimeout(() => servicesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
-                    }
-                }
-            }, [activeSection, isAdminOpen, currentView]);
-
-            const handleLogin = (e) => {
-                e.preventDefault();
-                const userFound = users.find(u => u.username === loginUser && u.password === loginPass);
-                if (userFound) {
-                    setCurrentUser(userFound);
-                    setLoginError('');
-                    setLoginUser('');
-                    setLoginPass('');
-                } else {
-                    setLoginError('Credenciales incorrectas');
-                }
-            };
-
-            const handleLogout = () => {
-                setCurrentUser(null);
-                setIsAdminOpen(false);
-                setActiveSection(null);
-            };
-
-            const handleCreateUser = (e) => {
-                e.preventDefault();
-                if (!newUser || !newPass) return;
-                if (users.find(u => u.username === newUser)) {
-                    alert('El usuario ya existe');
-                    return;
-                }
-                const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
-                setUsers([...users, { id: newId, username: newUser, password: newPass, role: 'editor' }]);
-                setNewUser('');
-                setNewPass('');
-                alert('Usuario creado con éxito');
-            };
-
-            const handleChangePassword = (id) => {
-                if (!editPass) return;
-                setUsers(users.map(u => u.id === id ? { ...u, password: editPass } : u));
-                setEditingUserId(null);
-                setEditPass('');
-                alert('Contraseña actualizada');
-            };
-
-            const updateConfig = (section, field, value) => {
-                setSiteConfig(prev => ({
-                    ...prev,
-                    [section]: { ...prev[section], [field]: value }
-                }));
-            };
-
-            const updateNestedConfig = (section, subSection, field, value) => {
-                setSiteConfig(prev => ({
-                    ...prev,
-                    [section]: {
-                        ...prev[section],
-                        [subSection]: {
-                            ...prev[section][subSection],
-                            [field]: value
-                        }
-                    }
-                }));
-            };
-
-            const updateHeroConfig = (element, field, value) => {
-                setSiteConfig(prev => ({
-                    ...prev,
-                    hero: {
-                        ...prev.hero,
-                        [element]: {
-                            ...prev.hero[element],
-                            [field]: value
-                        }
-                    }
-                }));
-            };
-
-            const updateService = (id, field, value) => {
-                setSiteConfig(prev => ({
-                    ...prev,
-                    services: prev.services.map(s => s.id === id ? { ...s, [field]: value } : s)
-                }));
-            };
 
             const Logo = () => (
                 <div className="flex items-center gap-2" style={{ height: `${siteConfig.appearance.logoSize}px` }}>
@@ -397,280 +248,11 @@
                 </div>
             );
 
-            // --- RENDERIZADO DE CONTROLES DE TEXTO (Helper para admin) ---
-            const renderTextControls = (label, sectionKey) => (
-                <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">{label}</label>
-                    <input 
-                        type="text" 
-                        value={siteConfig.hero[sectionKey].text} 
-                        onChange={(e) => updateHeroConfig(sectionKey, 'text', e.target.value)} 
-                        className="w-full p-2 bg-white rounded border text-xs font-bold mb-2"
-                        placeholder="Texto"
-                    />
-                    <div className="grid grid-cols-3 gap-2">
-                        <select 
-                            value={siteConfig.hero[sectionKey].font} 
-                            onChange={(e) => updateHeroConfig(sectionKey, 'font', e.target.value)}
-                            className="w-full p-1 bg-white rounded border text-[10px]"
-                        >
-                            <option value="font-sans">Sans</option>
-                            <option value="font-montserrat">Mont.</option>
-                            <option value="font-poppins">Pop.</option>
-                        </select>
-                        <select 
-                            value={siteConfig.hero[sectionKey].size} 
-                            onChange={(e) => updateHeroConfig(sectionKey, 'size', e.target.value)}
-                            className="w-full p-1 bg-white rounded border text-[10px]"
-                        >
-                            {sectionKey === 'description' ? (
-                                <React.Fragment>
-                                    <option value="text-sm">Pequeño</option>
-                                    <option value="text-base md:text-lg">Normal</option>
-                                    <option value="text-lg md:text-xl">Grande</option>
-                                    <option value="text-xl md:text-2xl">XL</option>
-                                </React.Fragment>
-                            ) : (
-                                <React.Fragment>
-                                    <option value="text-4xl md:text-6xl">Grande</option>
-                                    <option value="text-5xl md:text-7xl">XL</option>
-                                    <option value="text-6xl md:text-8xl">2XL</option>
-                                    <option value="text-6xl md:text-9xl">Gigante</option>
-                                </React.Fragment>
-                            )}
-                        </select>
-                        <div className="flex bg-white rounded border overflow-hidden">
-                            <button onClick={() => updateHeroConfig(sectionKey, 'align', 'text-left')} className={`flex-1 flex items-center justify-center hover:bg-slate-50 ${siteConfig.hero[sectionKey].align === 'text-left' ? 'bg-slate-100 text-red-600' : ''}`}><Icon name="AlignLeft" size={12} /></button>
-                            <button onClick={() => updateHeroConfig(sectionKey, 'align', 'text-center')} className={`flex-1 flex items-center justify-center hover:bg-slate-50 border-l border-r ${siteConfig.hero[sectionKey].align === 'text-center' ? 'bg-slate-100 text-red-600' : ''}`}><Icon name="AlignCenter" size={12} /></button>
-                            <button onClick={() => updateHeroConfig(sectionKey, 'align', 'text-right')} className={`flex-1 flex items-center justify-center hover:bg-slate-50 ${siteConfig.hero[sectionKey].align === 'text-right' ? 'bg-slate-100 text-red-600' : ''}`}><Icon name="AlignRight" size={12} /></button>
-                        </div>
-                    </div>
-                </div>
-            );
-
-            // --- PANELES INDEPENDIENTES ---
-            const renderLoginModal = () => (
-                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl relative">
-                        <button onClick={() => setIsAdminOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-900"><Icon name="X" /></button>
-                        <div className="mb-8 text-center">
-                            <div className="w-12 h-12 bg-red-600 rounded-2xl mx-auto flex items-center justify-center text-white mb-4 shadow-lg"><Icon name="Lock" /></div>
-                            <h3 className="text-xl font-black uppercase tracking-tighter">Acceso Admin</h3>
-                        </div>
-                        <form onSubmit={handleLogin} className="space-y-4">
-                            <input type="text" placeholder="Usuario" value={loginUser} onChange={e => setLoginUser(e.target.value)} className="w-full p-4 bg-slate-50 rounded-xl text-xs font-bold border border-slate-200 text-center outline-none" />
-                            <input type="password" placeholder="Contraseña" value={loginPass} onChange={e => setLoginPass(e.target.value)} className="w-full p-4 bg-slate-50 rounded-xl text-xs font-bold border border-slate-200 text-center outline-none" />
-                            {loginError && <p className="text-center text-red-600 text-[10px] font-bold">{loginError}</p>}
-                            <button className="w-full py-4 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-[0.2em]">Ingresar</button>
-                        </form>
-                    </div>
-                </div>
-            );
-
-            const renderAdminPanel = () => (
-                <div className="fixed inset-y-0 right-0 z-[100] w-full md:w-96 bg-white shadow-2xl flex flex-col border-l border-slate-200 animate-slide-in-right">
-                    
-                    <div className="bg-slate-900 p-6 text-white flex justify-between items-center shrink-0">
-                        <div className="flex items-center gap-3">
-                            <Icon name="Settings" size={18} />
-                            <div>
-                                <h3 className="font-black uppercase tracking-widest text-xs">Editor Visual</h3>
-                                <p className="text-[10px] text-green-400 flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-400 block"></span> En línea</p>
-                            </div>
-                        </div>
-                        <button onClick={() => { setIsAdminOpen(false); setActiveSection(null); }} className="hover:bg-white/10 p-2 rounded-full transition"><Icon name="X" size={18}/></button>
-                    </div>
-
-                    <div className="p-4 bg-yellow-50 border-b border-yellow-100 text-[10px] text-yellow-800 font-medium flex items-center gap-2">
-                        <Icon name="Eye" size={14} /> Vista previa en tiempo real
-                    </div>
-
-                    <div className="flex border-b border-slate-200 bg-slate-50 shrink-0">
-                        <button onClick={() => setAdminTab('appearance')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${adminTab === 'appearance' ? 'bg-white text-red-600 border-b-2 border-red-600' : 'text-slate-400'}`}>Estilo</button>
-                        <button onClick={() => setAdminTab('content')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${adminTab === 'content' ? 'bg-white text-red-600 border-b-2 border-red-600' : 'text-slate-400'}`}>Textos</button>
-                        <button onClick={() => setAdminTab('users')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${adminTab === 'users' ? 'bg-white text-red-600 border-b-2 border-red-600' : 'text-slate-400'}`}>Admin</button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-6 bg-slate-50 space-y-8">
-                        
-                        {adminTab === 'appearance' && (
-                            <React.Fragment>
-                                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2"><Icon name="Image" size={12}/> Logo</h4>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="text-[9px] font-bold text-slate-400 uppercase block mb-1">URL / Archivo</label>
-                                            <input type="text" value={siteConfig.appearance.logoPath} onChange={(e) => updateConfig('appearance', 'logoPath', e.target.value)} className="w-full p-2 bg-slate-50 rounded border text-xs" />
-                                        </div>
-                                        <div>
-                                            <label className="text-[9px] font-bold text-slate-400 uppercase block mb-1">Tamaño ({siteConfig.appearance.logoSize}px)</label>
-                                            <input type="range" min="20" max="120" value={siteConfig.appearance.logoSize} onChange={(e) => updateConfig('appearance', 'logoSize', e.target.value)} className="w-full accent-red-600" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2"><Icon name="Palette" size={12}/> Menú Navegación</h4>
-                                    <div className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="text-[9px] font-bold text-slate-400 uppercase block mb-1">Fuente</label>
-                                                <select value={siteConfig.appearance.nav.font} onChange={(e) => updateNestedConfig('appearance', 'nav', 'font', e.target.value)} className="w-full p-2 bg-slate-50 rounded border text-xs">
-                                                    <option value="font-sans">Inter</option>
-                                                    <option value="font-montserrat">Montserrat</option>
-                                                    <option value="font-poppins">Poppins</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="text-[9px] font-bold text-slate-400 uppercase block mb-1">Tamaño</label>
-                                                <select value={siteConfig.appearance.nav.size} onChange={(e) => updateNestedConfig('appearance', 'nav', 'size', e.target.value)} className="w-full p-2 bg-slate-50 rounded border text-xs">
-                                                    <option value="text-[9px]">S</option>
-                                                    <option value="text-[10px]">M</option>
-                                                    <option value="text-xs">L</option>
-                                                    <option value="text-sm">XL</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="text-[9px] font-bold text-slate-400 uppercase block mb-1">Link Normal</label>
-                                                <input type="color" value={siteConfig.appearance.nav.linkColor} onChange={(e) => updateNestedConfig('appearance', 'nav', 'linkColor', e.target.value)} className="w-full h-8 rounded cursor-pointer"/>
-                                            </div>
-                                            <div>
-                                                <label className="text-[9px] font-bold text-slate-400 uppercase block mb-1">Link Activo</label>
-                                                <input type="color" value={siteConfig.appearance.nav.activeColor} onChange={(e) => updateNestedConfig('appearance', 'nav', 'activeColor', e.target.value)} className="w-full h-8 rounded cursor-pointer"/>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </React.Fragment>
-                        )}
-
-                        {adminTab === 'content' && (
-                            <div className="space-y-6">
-                                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100" onClick={() => { setActiveSection('hero'); setCurrentView('home'); }}>
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2 cursor-pointer hover:text-red-600 transition"><Icon name="Layout" size={12}/> Portada (Click para ir)</h4>
-                                    
-                                    <div className="space-y-4">
-                                        {renderTextControls("Título 1 (Soluciones)", "title1")}
-                                        {renderTextControls("Título 2 (Para tu PC)", "title2")}
-                                        {renderTextControls("Descripción", "description")}
-                                        
-                                        {/* NUEVO: CONTROL DEL BOTÓN PRINCIPAL */}
-                                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl space-y-3">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Botón Principal</label>
-                                            <input 
-                                                type="text" 
-                                                value={siteConfig.hero.button.text} 
-                                                onChange={(e) => updateHeroConfig('button', 'text', e.target.value)} 
-                                                className="w-full p-2 bg-white rounded border text-xs font-bold mb-2"
-                                                placeholder="Texto del Botón"
-                                            />
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <select 
-                                                    value={siteConfig.hero.button.font} 
-                                                    onChange={(e) => updateHeroConfig('button', 'font', e.target.value)}
-                                                    className="w-full p-1 bg-white rounded border text-[10px]"
-                                                >
-                                                    <option value="font-sans">Sans</option>
-                                                    <option value="font-montserrat">Mont.</option>
-                                                    <option value="font-poppins">Pop.</option>
-                                                </select>
-                                                <select 
-                                                    value={siteConfig.hero.button.size} 
-                                                    onChange={(e) => updateHeroConfig('button', 'size', e.target.value)}
-                                                    className="w-full p-1 bg-white rounded border text-[10px]"
-                                                >
-                                                    <option value="text-[9px]">S</option>
-                                                    <option value="text-[10px]">M</option>
-                                                    <option value="text-xs">L</option>
-                                                    <option value="text-sm">XL</option>
-                                                </select>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div>
-                                                    <label className="text-[8px] font-bold text-slate-400 uppercase block mb-1">Fondo</label>
-                                                    <input type="color" value={siteConfig.hero.button.bgColor} onChange={(e) => updateHeroConfig('button', 'bgColor', e.target.value)} className="w-full h-6 rounded cursor-pointer"/>
-                                                </div>
-                                                <div>
-                                                    <label className="text-[8px] font-bold text-slate-400 uppercase block mb-1">Texto</label>
-                                                    <input type="color" value={siteConfig.hero.button.textColor} onChange={(e) => updateHeroConfig('button', 'textColor', e.target.value)} className="w-full h-6 rounded cursor-pointer"/>
-                                                </div>
-                                            </div>
-                                            <div className="flex bg-white rounded border overflow-hidden mt-2">
-                                                <button onClick={() => updateHeroConfig('button', 'align', 'justify-start')} className={`flex-1 flex items-center justify-center py-1 hover:bg-slate-50 ${siteConfig.hero.button.align === 'justify-start' ? 'bg-slate-100 text-red-600' : ''}`}><Icon name="AlignLeft" size={12} /></button>
-                                                <button onClick={() => updateHeroConfig('button', 'align', 'justify-center')} className={`flex-1 flex items-center justify-center py-1 hover:bg-slate-50 border-l border-r ${siteConfig.hero.button.align === 'justify-center' ? 'bg-slate-100 text-red-600' : ''}`}><Icon name="AlignCenter" size={12} /></button>
-                                                <button onClick={() => updateHeroConfig('button', 'align', 'justify-end')} className={`flex-1 flex items-center justify-center py-1 hover:bg-slate-50 ${siteConfig.hero.button.align === 'justify-end' ? 'bg-slate-100 text-red-600' : ''}`}><Icon name="AlignRight" size={12} /></button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100" onClick={() => { setActiveSection('services'); setCurrentView('tarifas'); }}>
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2 cursor-pointer hover:text-red-600 transition"><Icon name="List" size={12}/> Servicios (Click para ir)</h4>
-                                    <div className="space-y-4">
-                                        {siteConfig.services.map((service) => (
-                                            <div key={service.id} className="p-3 border border-slate-100 rounded bg-slate-50">
-                                                <div className="flex gap-2 mb-2">
-                                                    <input type="text" value={service.title} onChange={(e) => updateService(service.id, 'title', e.target.value)} className="flex-1 p-1 bg-white rounded border text-[10px] font-bold" />
-                                                    <input type="text" value={service.price} onChange={(e) => updateService(service.id, 'price', e.target.value)} className="w-20 p-1 bg-white rounded border text-[10px] text-right font-black text-red-600" />
-                                                </div>
-                                                <input type="text" value={service.desc} onChange={(e) => updateService(service.id, 'desc', e.target.value)} className="w-full p-1 bg-white rounded border text-[10px] text-slate-500" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {adminTab === 'users' && (
-                            <div className="space-y-6">
-                                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4"><Icon name="UserPlus" size={12}/> Nuevo Usuario</h4>
-                                    <form onSubmit={handleCreateUser} className="space-y-3">
-                                        <input type="text" value={newUser} onChange={(e) => setNewUser(e.target.value)} className="w-full p-2 bg-slate-50 rounded border text-xs" placeholder="Usuario" />
-                                        <input type="password" value={newPass} onChange={(e) => setNewPass(e.target.value)} className="w-full p-2 bg-slate-50 rounded border text-xs" placeholder="Clave" />
-                                        <button className="w-full py-2 bg-slate-900 text-white rounded text-xs font-bold">Crear</button>
-                                    </form>
-                                </div>
-                                <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Usuarios</h4>
-                                    <div className="space-y-2">
-                                        {users.map(u => (
-                                            <div key={u.id} className="flex items-center justify-between p-3 bg-slate-50 rounded border border-slate-100">
-                                                <span className="text-xs font-bold">{u.username}</span>
-                                                {editingUserId === u.id ? (
-                                                    <div className="flex gap-2">
-                                                        <input type="text" value={editPass} onChange={e => setEditPass(e.target.value)} placeholder="Nueva clave" className="p-1 text-[10px] border rounded w-20" />
-                                                        <button onClick={() => handleChangePassword(u.id)} className="text-green-600"><Icon name="Check" size={14}/></button>
-                                                        <button onClick={() => setEditingUserId(null)} className="text-slate-400"><Icon name="X" size={14}/></button>
-                                                    </div>
-                                                ) : (
-                                                    <button onClick={() => { setEditingUserId(u.id); setEditPass(''); }} className="text-[9px] font-bold text-red-600 uppercase">Clave</button>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        
-                        <div className="pt-4 border-t border-slate-200">
-                            <button onClick={handleLogout} className="w-full py-3 bg-red-50 text-red-600 rounded-xl text-xs font-bold border border-red-100 hover:bg-red-100 transition">Cerrar Sesión</button>
-                        </div>
-                    </div>
-                </div>
-            );
-
             return (
-                <div className={`min-h-screen ${siteConfig.appearance.globalFont} layout-transition ${isAdminOpen && currentUser ? 'mr-0 md:mr-96' : ''}`} style={{ backgroundColor: siteConfig.appearance.secondaryColor }}>
-                    
-                    {/* Admin Overlays */}
-                    {isAdminOpen && !currentUser && renderLoginModal()}
-                    {isAdminOpen && currentUser && renderAdminPanel()}
+                <div className={`min-h-screen ${siteConfig.appearance.globalFont}`} style={{ backgroundColor: siteConfig.appearance.secondaryColor }}>
 
                     {/* Navbar Dinámica */}
-                    <nav className={`fixed w-full z-50 transition-all ${scrolled || currentView === 'tarifas' ? 'bg-white shadow-md py-3' : 'bg-transparent py-6'} ${isAdminOpen && currentUser ? 'pr-96' : ''}`}>
+                    <nav className={`fixed w-full z-50 transition-all ${scrolled || currentView === 'tarifas' ? 'bg-white shadow-md py-3' : 'bg-transparent py-6'}`}>
                         <div className="container mx-auto px-6 flex justify-between items-center">
                             <button onClick={() => setCurrentView('home')}><Logo /></button>
                             <div className={`hidden md:flex items-center gap-10 font-black uppercase tracking-widest opacity-90 ${siteConfig.appearance.nav.font} ${siteConfig.appearance.nav.size}`}>
@@ -716,10 +298,7 @@
                     <main className="relative z-10">
                         {currentView === 'home' ? (
                             <div className="animate-fade-in">
-                                <section 
-                                    ref={heroRef}
-                                    className={`min-h-screen flex items-center px-6 pt-20 transition-all duration-300 ${activeSection === 'hero' ? 'ring-4 ring-red-500 ring-offset-4 rounded-3xl bg-white shadow-xl' : ''}`}
-                                >
+                                <section className="min-h-screen flex items-center px-6 pt-20">
                                     <div className="container mx-auto max-w-5xl">
                                         <span className="text-red-600 font-bold text-xs uppercase tracking-widest block mb-4 border-l-4 border-red-600 pl-4">{siteConfig.hero.tag}</span>
                                         <h1 className="leading-[0.9] tracking-tighter mb-8">
@@ -767,7 +346,7 @@
                                         <button onClick={() => setCurrentView('home')} className="text-xs font-bold uppercase text-slate-400 mb-4 flex items-center gap-2 hover:text-red-600 transition-colors">← Volver al Inicio</button>
                                         <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none">Planes & <br/><span className="text-red-600">Tarifas</span></h2>
                                     </div>
-                                    <div ref={servicesRef} className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24 transition-all duration-300 ${activeSection === 'services' ? 'ring-4 ring-red-500 ring-offset-4 rounded-[3rem] p-8 bg-slate-100' : ''}`}>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24">
                                         {siteConfig.services.map((s, i) => (
                                             <div key={i} className="group p-10 rounded-[2.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-2xl transition-all flex flex-col">
                                                 <div className="flex justify-between items-start mb-8">
@@ -807,16 +386,6 @@
                             <div className="text-[9px] font-black text-slate-300 tracking-[0.4em] uppercase mt-4">Sos.Tecnopc © 2026</div>
                         </div>
                     </footer>
-
-                    {/* Botón Flotante Admin */}
-                    <button 
-                        onClick={() => setIsAdminOpen(true)}
-                        className={`fixed bottom-6 left-6 z-50 w-12 h-12 bg-white border border-slate-200 rounded-full shadow-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:scale-110 transition-all ${isAdminOpen ? 'opacity-0 pointer-events-none' : ''}`}
-                        title="Panel de Administración"
-                        aria-label="Abrir panel de administración"
-                    >
-                        <Icon name="Lock" size={18} />
-                    </button>
 
                 </div>
             );
