@@ -62,24 +62,12 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- UTILIDADES DE PERSISTENCIA (API + localStorage fallback) ---
-        const API_BASE = '/api';
-        
-        const loadFromAPI = async (endpoint, defaultValue) => {
-            try {
-                const response = await fetch(`${API_BASE}/${endpoint}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    // Guardar en localStorage como cache
-                    localStorage.setItem(`sostecnopc_${endpoint}`, JSON.stringify(data));
-                    return data;
-                }
-                throw new Error('API not available');
-            } catch (e) {
-                // Fallback a localStorage
-                const cached = localStorage.getItem(`sostecnopc_${endpoint}`);
-                return cached ? JSON.parse(cached) : defaultValue;
-            }
+        // --- UTILIDADES DE PERSISTENCIA ---
+        // Usar siempre la configuración por defecto (sin caché)
+        const loadConfig = (defaultValue) => {
+            // Limpiar caché antiguo
+            localStorage.removeItem('sostecnopc_config');
+            return defaultValue;
         };
 
         // --- SISTEMA DE ICONOS INTEGRADO ---
@@ -202,16 +190,11 @@
             
             // CMS State - Inicializar con valores por defecto
             const [siteConfig, setSiteConfig] = useState(initialConfig);
-            const [isLoading, setIsLoading] = useState(true);
+            const [isLoading, setIsLoading] = useState(false);
             
-            // Cargar datos desde localStorage al iniciar
+            // Limpiar caché antiguo al cargar
             useEffect(() => {
-                const loadData = async () => {
-                    const configData = await loadFromAPI('config', initialConfig);
-                    setSiteConfig(configData);
-                    setIsLoading(false);
-                };
-                loadData();
+                localStorage.removeItem('sostecnopc_config');
             }, []);
 
             useEffect(() => {
