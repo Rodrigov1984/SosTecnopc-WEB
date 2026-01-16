@@ -273,9 +273,41 @@
             const [isLoading, setIsLoading] = useState(true);
             const [saveStatus, setSaveStatus] = useState(''); // 'saving', 'saved', 'error'
             
-            // Cargar configuración desde la API al iniciar
+            // Helper para cargar desde localStorage
+            const loadFromLocalStorage = () => {
+                const saved = localStorage.getItem('sostecnopc_admin_config');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (!parsed.hero?.specialties) {
+                        parsed.hero.specialties = initialConfig.hero.specialties;
+                    }
+                    if (!parsed.hero?.specialties?.descriptions) {
+                        parsed.hero.specialties.descriptions = {};
+                    }
+                    if (!parsed.contact || typeof parsed.contact?.title === 'string') {
+                        parsed.contact = initialConfig.contact;
+                    }
+                    return parsed;
+                }
+                return null;
+            };
+            
+            // Cargar configuración desde la API al iniciar (solo en producción)
             useEffect(() => {
-                const loadRemoteConfig = async () => {
+                const loadConfig = async () => {
+                    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                    
+                    // En localhost, solo usar localStorage
+                    if (isLocalhost) {
+                        const localConfig = loadFromLocalStorage();
+                        if (localConfig) {
+                            setSiteConfig(localConfig);
+                        }
+                        setIsLoading(false);
+                        return;
+                    }
+                    
+                    // En producción, intentar cargar desde API
                     try {
                         const response = await fetch('/api/config');
                         if (response.ok) {
@@ -292,28 +324,24 @@
                             }
                             setSiteConfig(remoteConfig);
                             localStorage.setItem('sostecnopc_admin_config', JSON.stringify(remoteConfig));
+                        } else {
+                            // Fallback a localStorage
+                            const localConfig = loadFromLocalStorage();
+                            if (localConfig) {
+                                setSiteConfig(localConfig);
+                            }
                         }
                     } catch (e) {
                         console.log('Usando configuración local');
-                        // Intentar cargar desde localStorage como fallback
-                        const saved = localStorage.getItem('sostecnopc_admin_config');
-                        if (saved) {
-                            const parsed = JSON.parse(saved);
-                            if (!parsed.hero?.specialties) {
-                                parsed.hero.specialties = initialConfig.hero.specialties;
-                            }
-                            if (!parsed.hero?.specialties?.descriptions) {
-                                parsed.hero.specialties.descriptions = {};
-                            }
-                            if (!parsed.contact || typeof parsed.contact?.title === 'string') {
-                                parsed.contact = initialConfig.contact;
-                            }
-                            setSiteConfig(parsed);
+                        // Fallback a localStorage
+                        const localConfig = loadFromLocalStorage();
+                        if (localConfig) {
+                            setSiteConfig(localConfig);
                         }
                     }
                     setIsLoading(false);
                 };
-                loadRemoteConfig();
+                loadConfig();
             }, []);
             
             // --- SISTEMA DE ADMIN OCULTO ---
@@ -414,27 +442,35 @@
                     setSiteConfig(draftConfig);
                     localStorage.setItem('sostecnopc_admin_config', JSON.stringify(draftConfig));
                     
-                    try {
-                        const response = await fetch('/api/config', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-Admin-Pin': '1234'
-                            },
-                            body: JSON.stringify(draftConfig)
-                        });
-                        
-                        if (response.ok) {
-                            setSaveStatus('saved');
-                            alert('✅ Cambios guardados en el servidor');
-                        } else {
+                    // Solo intentar guardar en servidor si no estamos en localhost
+                    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                    
+                    if (!isLocalhost) {
+                        try {
+                            const response = await fetch('/api/config', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Admin-Pin': '1234'
+                                },
+                                body: JSON.stringify(draftConfig)
+                            });
+                            
+                            if (response.ok) {
+                                setSaveStatus('saved');
+                                alert('✅ Cambios guardados en el servidor');
+                            } else {
+                                setSaveStatus('error');
+                                alert('⚠️ Guardado local OK. Para persistir en producción, configura Vercel Blob.');
+                            }
+                        } catch (e) {
                             setSaveStatus('error');
-                            alert('⚠️ Guardado local OK, pero hubo error al sincronizar con el servidor');
+                            console.error('Error al guardar:', e);
+                            alert('⚠️ Guardado local OK. Servidor no disponible.');
                         }
-                    } catch (e) {
-                        setSaveStatus('error');
-                        console.error('Error al guardar:', e);
-                        alert('⚠️ Guardado local OK, pero no se pudo conectar al servidor');
+                    } else {
+                        setSaveStatus('saved');
+                        alert('✅ Cambios guardados localmente (modo desarrollo)');
                     }
                     
                     setTimeout(() => setSaveStatus(''), 3000);
